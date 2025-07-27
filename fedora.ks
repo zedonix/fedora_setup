@@ -1,4 +1,3 @@
-#version=DEVEL
 # Fedora Everything ISO
 cdrom
 
@@ -6,63 +5,49 @@ cdrom
 lang en_US.UTF-8
 keyboard us
 timezone Asia/Kolkata --utc
-authselect select sssd --force
+#authselect select sssd --force
+
+# Configure faillock
+authselect enable-feature with-faillock
 
 #### 2) Security
 selinux --enforcing
 
-#### 3) Authentication (interactive)
-# No 'rootpw' → installer will ask.
-# No 'network --hostname' → installer will ask.
-
 #### 4) User Account (interactive password)
-user --name=piyush --groups=wheel --shell=/bin/bash
+user --name=piyush --groups=wheel --password=$userpass
 
 #### 5) Networking
 network --bootproto=dhcp --device=link --hostname=fedoraPC
 
-#### 6) Bootloader: install GRUB to EFI as fallback
-# bootloader --bootloader-id=Fedora --location=uefi --timeout=5
-
-#### 7) Partitioning: GPT + interactive
-# zerombr
-# clearpart --all --initlabel
-# No 'part' → installer prompts you to create an EFI partition, root, swap, etc.
-
-#### 8) Default target → graphical (for ly DM)
-# Will switch in %post.
-
-%packages --nobase
+%packages
+-sssd*
+-abrt*
 @core
-@kernel
-@development-tools
-kernel
-kernel-headers
+@standard
+@hardware-support
+@fonts
+@multimedia
+@networkmanager-submodules
+@printing
+
+linux-firmware
 efibootmgr
 os-prober
-sudo
-zram-generator
-NetworkManager
-git
-git-delta
-reflector
 exfat-utils
 mtools
 dosfstools
+
+git
+git-delta
+gh
 neovim
 bash-completion
 zoxide
-linux-firmware
 microcode_ctl
-acpid
-acpi
 borg
-ntfs-3g
 inotify-tools
-openssh-server
-ncdu
+openssh
 fzf
-github-cli
 ripgrep
 sqlite
 cronie
@@ -80,16 +65,14 @@ pipewire
 wireplumber
 pipewire-pulseaudio
 wf-recorder
-xorg-xwayland
+xorg-x11-server-Xwayland
 xdg-desktop-portal-wlr
 xdg-desktop-portal-gtk
-ly
 sway
 swaybg
 swaylock
 swayidle
-kanshi
-discord
+swayimg
 firefox
 zathura
 pcmanfm
@@ -104,8 +87,7 @@ asciinema
 yt-dlp
 tesseract
 papirus-icon-theme
-google-noto-sans-fonts
-qt6-wayland
+qt6-qtwayland
 kvantum
 mako
 grim
@@ -117,42 +99,21 @@ npm
 python3-pip
 lua
 luarocks
+system-config-printer
+flatpak
 %end
-
 %post --log=/root/ks-post.log
-# 1) Set graphical.target for ly DM
-systemctl set-default graphical.target
 
 # 2) Enable services
-systemctl enable NetworkManager cronie sshd libvirtd bluetooth ly
+systemctl enable NetworkManager cronie sshd
 
 # 3) Add Flathub remote
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-# 4) Install systemd‑boot into the EFI System Partition
-#    Assumes your EFI is mounted at /boot/efi by Anaconda.
-bootctl --path=/boot/efi install
-
-#    Create loader config
-cat > /boot/efi/loader/loader.conf << 'EOF'
-default fedora
-EOF
-
-#    Generate an entry for your Fedora root
-rootdev=$(findmnt / -o SOURCE -n)
-rootuuid=$(blkid -s UUID -o value "$rootdev")
-cat > /boot/efi/loader/entries/fedora.conf << EOF
-title   Fedora Linux
-linux   /vmlinuz
-initrd  /initramfs
-options root=UUID=${rootuuid} ro quiet
-EOF
-
 su - piyush -c '
-  set -e
+    set -e
     mkdir -p ~/Documents/default
-
-username="piyush"
+    username="piyush"
     # Clone scripts
     if ! git clone https://github.com/zedonix/scripts.git ~/Documents/default/scripts; then
       echo "Failed to clone scripts. Continuing..."
