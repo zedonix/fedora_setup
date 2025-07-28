@@ -159,7 +159,7 @@ sudo bash <<'EOF'
     # services
     # rfkill unblock bluetooth
     # modprobe btusb || true
-    systemctl enable networkmanager networkmanager-dispatcher
+    systemctl enable NetworkManager NetworkManager-dispatcher
     if [[ "$howmuch" == "max" ]]; then
         if [[ "$hardware" == "hardware" ]]; then
             systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
@@ -174,7 +174,7 @@ sudo bash <<'EOF'
         fi
     fi
     systemctl mask systemd-rfkill systemd-rfkill.socket
-    systemctl disable networkmanager-wait-online.service systemd-networkd.service systemd-resolved
+    systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
 
     # prevent networkmanager from using systemd-resolved
     mkdir -p /etc/networkmanager/conf.d
@@ -205,10 +205,6 @@ sudo bash <<'EOF'
     systemctl enable firewalld
     # echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
     # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
-
-    # Libvirt setup
-    virsh net-autostart default
-    virsh net-start default
 EOF
 
 # Flatpak setup

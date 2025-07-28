@@ -46,6 +46,10 @@ for dir in ~/.mozilla/firefox/*.default-release/; do
     break
 done
 
+# Libvirt setup
+virsh net-autostart default
+virsh net-start default
+
 # Nvim tools install
 foot -e nvim +MasonToolsInstall &
 
