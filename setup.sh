@@ -55,17 +55,24 @@ fi
 # Install stuff
 ## Adding repos
 sudo dnf copr enable solopasha/hyprland
+sudo dnf copr enable maximizerr/SwayAura
 
-## External Install
+# pacstrap of fedora
+xargs sudo dnf install -y <~/fedora_setup/pkglist.txt
+
+# eza
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
 gunzip -c eza_x86_64-unknown-linux-gnu.tar.gz | cpio -idmv
 sudo mv eza /usr/local/bin/
 sudo chmod +x /usr/local/bin/eza
-
-xargs sudo dnf install -y <~/fedora_setup/pkglist.txt
-sudo dracut --force
-sudo grub2-mkconfig -o /boot/grub2/grub.cfg
-
+# Iosevka
+mkdir -p ~/.local/share/fonts/iosevka
+cd ~/.local/share/fonts/iosevka
+curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip
+unzip IosevkaTerm.zip
+rm IosevkaTerm.zip
+# unp
+python3 -m pip install --user unp
 
 # Copy config and dotfiles as the user
 mkdir -p ~/.local/state/bash ~/.local/state/zsh
@@ -101,6 +108,10 @@ fi
 git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 
 sudo bash <<'EOF'
+    # Cuz of microcode
+    dracut --force
+    grub2-mkconfig -o /boot/grub2/grub.cfg
+
     # User setup
     if [[ "$hardware" == "hardware" ]]; then
         usermod -aG wheel,video,audio,lp,scanner,kvm,libvirt,docker "$username"
