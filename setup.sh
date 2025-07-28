@@ -27,11 +27,11 @@ fi
 # Main package selection
 case "$hardware" in
 vm)
-    sed -n '1p;3p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >pkglist.txt
+    sed -n '1p;3p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >~/fedora_setup/pkglist.txt
     ;;
 hardware)
     # For hardware:max, we will add lines 5 and/or 6 later based on $extra
-    sed -n '1,4p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >pkglist.txt
+    sed -n '1,4p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >~/fedora_setup/pkglist.txt
     ;;
 esac
 
@@ -40,11 +40,11 @@ if [[ "$hardware" == "hardware" ]]; then
     case "$extra" in
     laptop)
         # Add both line 5 and 6
-        sed -n '5,6p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+        sed -n '5,6p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>~/fedora_setup/pkglist.txt
         ;;
     bluetooth)
         # Add only line 5
-        sed -n '5p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+        sed -n '5p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>~/fedora_setup/pkglist.txt
         ;;
     none)
         # Do not add line 5 or 6
