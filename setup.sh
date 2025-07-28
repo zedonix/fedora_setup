@@ -57,8 +57,8 @@ fi
 sudo dnf copr enable solopasha/hyprland
 
 ## External Install
-curl -L https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz \
-  | tar -xz
+curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
+gunzip -c eza_x86_64-unknown-linux-gnu.tar.gz | cpio -idmv
 sudo mv eza /usr/local/bin/
 sudo chmod +x /usr/local/bin/eza
 
