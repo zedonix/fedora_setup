@@ -66,59 +66,53 @@ xargs sudo dnf install -y <~/fedora_setup/pkglist.txt
 sudo dracut --force
 sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 
-# User setup
-if [[ "$hardware" == "hardware" ]]; then
-    usermod -aG wheel,video,audio,lp,scanner,kvm,libvirt,docker "$username"
-else
-    usermod -aG wheel,video,audio,lp "$username"
-fi
-
-# Sudo Configuration
-echo "%wheel ALL=(ALL) ALL" >/etc/sudoers.d/wheel
-echo "Defaults timestamp_timeout=-1" >/etc/sudoers.d/timestamp
-chmod 440 /etc/sudoers.d/wheel /etc/sudoers.d/timestamp
 
 # Copy config and dotfiles as the user
-mkdir -p ~/Documents/default
-# Clone scripts
-if ! git clone https://github.com/zedonix/scripts.git ~/Documents/default/scripts; then
-    echo "Failed to clone scripts. Continuing..."
-fi
-# Clone dotfiles
-if ! git clone https://github.com/zedonix/dotfiles.git ~/Documents/default/dotfiles; then
-    echo "Failed to clone dotfiles. Continuing..."
-fi
+mkdir -p ~/.local/state/bash ~/.local/state/zsh
+mkdir -p ~/Downloads ~/Documents/default ~/Documents/projects ~/Public ~/Templates/wiki ~/Videos ~/Pictures/Screenshots ~/.config
+mkdir -p ~/.local/share/npm ~/.cache/npm ~/.config/npm/config ~/.local/bin
+touch ~/.local/state/bash/history ~/.local/state/zsh/history ~/Templates/wiki/index.md
 
-# Clone archsetup
-if ! git clone https://github.com/zedonix/archsetup.git ~/Documents/default/archsetup; then
-    echo "Failed to clone archsetup. Continuing..."
-fi
+git clone https://github.com/zedonix/scripts.git ~/Documents/default/scripts
+git clone https://github.com/zedonix/dotfiles.git ~/Documents/default/dotfiles
+git clone https://github.com/zedonix/archsetup.git ~/Documents/default/archsetup
+git clone https://github.com/zedonix/notes.git ~/Documents/default/notes
+git clone https://github.com/CachyOS/ananicy-rules.git ~/Documents/default/ananicy-rules
+git clone https://github.com/zedonix/GruvboxGtk.git ~/Documents/default/GruvboxGtk
+git clone https://github.com/zedonix/GruvboxQT.git ~/Documents/default/GruvboxQT
+git clone https://github.com/zedonix/fedora_setup.git ~/Documents/default/fedora_setup
 
-# Clone Notes
-if ! git clone https://github.com/zedonix/notes.git ~/Documents/default/notes; then
-    echo "Failed to clone ananicy-rules. Continuing..."
-fi
+if [[ -d ~/Documents/default/dotfiles ]]; then
+    cp ~/Documents/default/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
+    cp ~/Documents/default/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
+    cp -r ~/Documents/default/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
+    ln -sf ~/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
+    ln -sf ~/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
+    ln -sf ~/Documents/default/dotfiles/.gtk-bookmarks ~/.gtk-bookmarks || true
 
-# Clone ananicy-rules
-if ! git clone https://github.com/CachyOS/ananicy-rules.git ~/Documents/default/ananicy-rules; then
-    echo "Failed to clone ananicy-rules. Continuing..."
+    for link in ~/Documents/default/dotfiles/.config/*; do
+        ln -sf "$link" ~/.config/ 2>/dev/null || true
+    done
+    for link in ~/Documents/default/scripts/bin/*; do
+        ln -sf "$link" ~/.local/bin 2>/dev/null || true
+    done
 fi
+# Clone tpm
+git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 
-# Clone GruvboxGtk
-if ! git clone https://github.com/zedonix/GruvboxGtk.git ~/Documents/default/GruvboxGtk; then
-    echo "Failed to clone GruvboxGtk. Continuing..."
-fi
-
-# Clone GruvboxQT
-if ! git clone https://github.com/zedonix/GruvboxQT.git ~/Documents/default/GruvboxQT; then
-    echo "Failed to clone GruvboxQT. Continuing..."
-fi
-
-# Clone fedora_setup
-if ! git clone https://github.com/zedonix/fedora_setup.git ~/Documents/default/fedora_setup; then
-    echo "Failed to clone fedora_setup. Continuing..."
-fi
 sudo bash <<'EOF'
+    # User setup
+    if [[ "$hardware" == "hardware" ]]; then
+        usermod -aG wheel,video,audio,lp,scanner,kvm,libvirt,docker "$username"
+    else
+        usermod -aG wheel,video,audio,lp "$username"
+    fi
+
+    # Sudo Configuration
+    echo "%wheel ALL=(ALL) ALL" >/etc/sudoers.d/wheel
+    echo "Defaults timestamp_timeout=-1" >/etc/sudoers.d/timestamp
+    chmod 440 /etc/sudoers.d/wheel /etc/sudoers.d/timestamp
+
     # Root .config
     mkdir -p ~/.config ~/.local/state/bash ~/.local/state/zsh
     echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' >~/.bash_profile
@@ -150,108 +144,75 @@ sudo bash <<'EOF'
     # Firefox policy
     mkdir -p /etc/firefox/policies
     ln -sf "/home/$username/Documents/default/dotfiles/policies.json" /etc/firefox/policies/policies.json 2>/dev/null || true
-EOF
 
-mkdir -p ~/Downloads ~/Documents/projects ~/Public ~/Templates/wiki ~/Videos ~/Pictures/Screenshots ~/.config ~/.local/state/bash ~/.local/state/zsh
-mkdir -p ~/.local/share/npm ~/.cache/npm ~/.config/npm/config ~/.local/bin
-touch ~/.local/state/bash/history ~/.local/state/zsh/history ~/Templates/wiki/index.md
-
-# Copy and link files (only if dotfiles exists)
-if [[ -d ~/Documents/default/dotfiles ]]; then
-    cp ~/Documents/default/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
-    cp ~/Documents/default/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
-    cp -r ~/Documents/default/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.gtk-bookmarks ~/.gtk-bookmarks || true
-
-    for link in ~/Documents/default/dotfiles/.config/*; do
-        ln -sf "$link" ~/.config/ 2>/dev/null || true
-    done
-    for link in ~/Documents/default/scripts/bin/*; do
-        ln -sf "$link" ~/.local/bin 2>/dev/null || true
-    done
-fi
-
-# Clone tpm
-if ! git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm; then
-    echo "Failed to clone tpm. Continuing..."
-fi
-sudo bash <<'EOF'
     # tldr wiki setup
     curl -L "https://raw.githubusercontent.com/filiparag/wikiman/master/Makefile" -o "wikiman-makefile"
     make -f ./wikiman-makefile source-tldr
     make -f ./wikiman-makefile source-install
     make -f ./wikiman-makefile clean
-EOF
 
-# zram config
-mkdir -p /etc/systemd/zram-generator.conf.d
-cat >/etc/systemd/zram-generator.conf.d/00-zram.conf <<EOF
-[zram0]
-zram-size = min(ram / 2, 4096)
-compression-algorithm = zstd
-swap-priority = 100
-fs-type = swap
-EOF
+    # zram config
+    sudo mkdir -p /etc/systemd/zram-generator.conf.d
+    printf "[zram0]\nzram-size = min(ram / 2, 4096)\ncompression-algorithm = zstd\nswap-priority = 100\nfs-type = swap\n" \
+        | sudo tee /etc/systemd/zram-generator.conf.d/00-zram.conf > /dev/null
 
-# Services
-# rfkill unblock bluetooth
-# modprobe btusb || true
-sudo bash <<'EOF'
-systemctl enable NetworkManager NetworkManager-dispatcher
-if [[ "$howMuch" == "max" ]]; then
-    if [[ "$hardware" == "hardware" ]]; then
-        systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
-    else
-        systemctl enable ly cronie ananicy-cpp sshd cronie
+    # services
+    # rfkill unblock bluetooth
+    # modprobe btusb || true
+    systemctl enable networkmanager networkmanager-dispatcher
+    if [[ "$howmuch" == "max" ]]; then
+        if [[ "$hardware" == "hardware" ]]; then
+            systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
+        else
+            systemctl enable ly cronie ananicy-cpp sshd cronie
+        fi
+        if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
+            systemctl enable bluetooth
+        fi
+        if [[ "$extra" == "laptop" ]]; then
+            systemctl enable tlp
+        fi
     fi
-    if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
-        systemctl enable bluetooth
-    fi
-    if [[ "$extra" == "laptop" ]]; then
-        systemctl enable tlp
-    fi
-fi
-systemctl mask systemd-rfkill systemd-rfkill.socket
-systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
+    systemctl mask systemd-rfkill systemd-rfkill.socket
+    systemctl disable networkmanager-wait-online.service systemd-networkd.service systemd-resolved
 
-# Prevent NetworkManager from using systemd-resolved
-mkdir -p /etc/NetworkManager/conf.d
-echo -e "[main]\nsystemd-resolved=false" | tee /etc/NetworkManager/conf.d/no-systemd-resolved.conf >/dev/null
+    # prevent networkmanager from using systemd-resolved
+    mkdir -p /etc/networkmanager/conf.d
+    echo -e "[main]\nsystemd-resolved=false" | tee /etc/networkmanager/conf.d/no-systemd-resolved.conf >/dev/null
 
-# Set DNS handling to 'default'
-echo -e "[main]\ndns=default" | tee /etc/NetworkManager/conf.d/dns.conf >/dev/null
+    # set dns handling to 'default'
+    echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
+    eof
+
+    # firewalld setup
+    firewall-cmd --set-default-zone=public
+    firewall-cmd --permanent --remove-service=dhcpv6-client
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --permanent --add-service=https
+    firewall-cmd --permanent --add-service=ssh
+    firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
+    firewall-cmd --set-log-denied=all
+    # Create and assign a zone for virbr0
+    firewall-cmd --permanent --new-zone=libvirt
+    firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
+    # Allow DHCP (ports 67, 68 UDP) and DNS (53 UDP)
+    firewall-cmd --permanent --zone=libvirt --add-port=67/udp
+    firewall-cmd --permanent --zone=libvirt --add-port=68/udp
+    firewall-cmd --permanent --zone=libvirt --add-port=53/udp
+    # Enable masquerading for routed traffic (NAT)
+    firewall-cmd --permanent --add-masquerade
+    firewall-cmd --reload
+    systemctl enable firewalld
+    # echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
+    # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
+
+    # Libvirt setup
+    virsh net-autostart default
+    virsh net-start default
 EOF
-
-# firewalld setup
-sudo firewall-cmd --set-default-zone=public
-sudo firewall-cmd --permanent --remove-service=dhcpv6-client
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
-sudo firewall-cmd --set-log-denied=all
-# Create and assign a zone for virbr0
-sudo firewall-cmd --permanent --new-zone=libvirt
-sudo firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
-# Allow DHCP (ports 67, 68 UDP) and DNS (53 UDP)
-sudo firewall-cmd --permanent --zone=libvirt --add-port=67/udp
-sudo firewall-cmd --permanent --zone=libvirt --add-port=68/udp
-sudo firewall-cmd --permanent --zone=libvirt --add-port=53/udp
-# Enable masquerading for routed traffic (NAT)
-sudo firewall-cmd --permanent --add-masquerade
-sudo firewall-cmd --reload
-sudo systemctl enable firewalld
-# echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
-# sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
 
 # Flatpak setup
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-# Libvirt setup
-sudo virsh net-autostart default
-sudo virsh net-start default
 
 # Configure static IP, gateway, and custom DNS
 nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1,1.0.0.1"
