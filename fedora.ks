@@ -1,3 +1,4 @@
+wl-clip-persist 
 # Fedora Everything ISO
 cdrom
 
