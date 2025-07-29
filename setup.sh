@@ -30,11 +30,11 @@ fi
 # Main package selection
 case "$hardware" in
 vm)
-    sed -n '1p;3p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
+    sed -n '1p;3p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
     ;;
 hardware)
     # For hardware:max, we will add lines 5 and/or 6 later based on $extra
-    sed -n '1,4p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
+    sed -n '1,4p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
     ;;
 esac
 
