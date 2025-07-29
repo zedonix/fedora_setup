@@ -52,6 +52,3 @@ virsh net-start default
 
 # Nvim tools install
 foot -e nvim +MasonToolsInstall &
-
-# Running aur.sh
-bash ~/Documents/default/fedora_setup/external.sh

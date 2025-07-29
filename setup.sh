@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd "$SCRIPT_DIR"
+
 # Variable set
 username=piyush
 
@@ -27,11 +30,11 @@ fi
 # Main package selection
 case "$hardware" in
 vm)
-    sed -n '1p;3p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >~/fedora_setup/pkglist.txt
+    sed -n '1p;3p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
     ;;
 hardware)
     # For hardware:max, we will add lines 5 and/or 6 later based on $extra
-    sed -n '1,4p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >~/fedora_setup/pkglist.txt
+    sed -n '1,4p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
     ;;
 esac
 
@@ -40,11 +43,11 @@ if [[ "$hardware" == "hardware" ]]; then
     case "$extra" in
     laptop)
         # Add both line 5 and 6
-        sed -n '5,6p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>~/fedora_setup/pkglist.txt
+        sed -n '5,6p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
         ;;
     bluetooth)
         # Add only line 5
-        sed -n '5p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>~/fedora_setup/pkglist.txt
+        sed -n '5p' pkgs.txt | tr ' ' '\n' | grep -v '^$' pkglist.txt
         ;;
     none)
         # Do not add line 5 or 6
@@ -58,7 +61,7 @@ sudo dnf copr enable solopasha/hyprland
 sudo dnf copr enable maximizerr/SwayAura
 
 # pacstrap of fedora
-xargs sudo dnf install -y <~/fedora_setup/pkglist.txt
+xargs sudo dnf install -y pkglist.txt
 
 # eza
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
