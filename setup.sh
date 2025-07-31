@@ -196,7 +196,6 @@ sudo bash <<'EOF'
 
     # set dns handling to 'default'
     echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
-    eof
 
     # firewalld setup
     firewall-cmd --set-default-zone=public
@@ -225,13 +224,12 @@ EOF
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Configure static IP, gateway, and custom DNS
-nmcli con mod "Wired connection 1" ipv4.dns "1.1.1.1,1.0.0.1"
-# 8.8.8.8,8.8.4.4
-nmcli con mod "Wired connection 1" ipv4.ignore-auto-dns yes
-
-# Apply changes
-nmcli con down "Wired connection 1"
-nmcli con up "Wired connection 1"
+for con in $(nmcli -g NAME con show); do
+  nmcli con mod "$con" ipv4.dns "1.1.1.1,1.0.0.1"
+  nmcli con mod "$con" ipv4.ignore-auto-dns yes
+  nmcli con down "$con"
+  nmcli con up "$con"
+done
 
 # A cron job
 (
