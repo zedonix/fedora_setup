@@ -224,12 +224,15 @@ EOF
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Configure static IP, gateway, and custom DNS
-for con in $(nmcli -g NAME con show); do
-  nmcli con mod "$con" ipv4.dns "1.1.1.1,1.0.0.1"
-  nmcli con mod "$con" ipv4.ignore-auto-dns yes
-  nmcli con down "$con"
-  nmcli con up "$con"
-done
+sudo tee /etc/NetworkManager/conf.d/dns.conf > /dev/null <<EOF
+[main]
+dns=none
+EOF
+sudo tee /etc/resolv.conf > /dev/null <<EOF
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+EOF
+sudo systemctl restart NetworkManager
 
 # A cron job
 (
