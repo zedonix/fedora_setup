@@ -47,7 +47,7 @@ if [[ "$hardware" == "hardware" ]]; then
         ;;
     bluetooth)
         # Add only line 5
-        sed -n '5p' ~/fedora_setup/pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+        sed -n '5p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
         ;;
     none)
         # Do not add line 5 or 6
@@ -63,9 +63,18 @@ sudo dnf copr enable maximizerr/SwayAura
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
 
+# Ly Setup
+sudo dnf install -y kernel-devel pam-devel libxcb-devel zig
+git clone https://codeberg.org/AnErrupTion/ly.git ~/Downloads/
+cd ~/Downloads/
+zig build
+sudo zig build installexe
+sudo systemctl enable ly.service
+sudo systemctl disable getty@tty2.service
+
 # eza
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
-gunzip -c eza_x86_64-unknown-linux-gnu.tar.gz | cpio -idmv
+tar -xzf eza_x86_64-unknown-linux-gnu.tar.gz
 sudo mv eza /usr/local/bin/
 sudo chmod +x /usr/local/bin/eza
 # Iosevka
@@ -74,6 +83,14 @@ cd ~/.local/share/fonts/iosevka
 curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip
 unzip IosevkaTerm.zip
 rm IosevkaTerm.zip
+# wikiman
+RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest \
+    | grep "browser_download_url" \
+    | grep -E "wikiman.*\.rpm" \
+    | cut -d '"' -f 4)
+curl -LO "$RPM_URL"
+RPM_FILE="${RPM_URL##*/}"
+sudo dnf install -y "$RPM_FILE"
 # unp
 python3 -m pip install --user unp
 
@@ -110,10 +127,45 @@ fi
 # Clone tpm
 git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 
-sudo bash <<'EOF'
-    # Cuz of microcode
+sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
+    # Systemd boot setup
     dracut --force
-    grub2-mkconfig -o /boot/grub2/grub.cfg
+    # grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    # Variables
+    EFI_DIR="/boot/efi"
+    LOADER_DIR="$EFI_DIR/loader"
+    ENTRIES_DIR="$LOADER_DIR/entries"
+    ROOT_UUID=$(blkid -s UUID -o value /dev/disk/by-label/root 2>/dev/null || findmnt / -no SOURCE | xargs blkid -s UUID -o value)
+
+
+    # setup systemd boot
+    bootctl --path="$EFI_DIR" install
+    mkdir -p "$LOADER_DIR"
+cat > "$LOADER_DIR/loader.conf" <<EOF
+default fedora
+timeout 3
+console-mode max
+editor no
+EOF
+
+    mkdir -p "$ENTRIES_DIR"
+cat > "$ENTRIES_DIR/fedora.conf" <<EOF
+title Fedora 42
+linux /vmlinuz
+initrd /initramfs.img
+options root=UUID=$ROOT_UUID rw splash
+EOF
+
+    # Update kernel/initramfs symlinks
+    KERNEL_IMG=$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*.x86_64' | sort -V | tail -n1)
+    INITRD_IMG=$(find /boot -maxdepth 1 -type f -name 'initramfs-*.img' ! -name '*rescue*' | sort -V | tail -n1)
+    ln -sf "$KERNEL_IMG" /boot/vmlinuz
+    ln -sf "$INITRD_IMG" /boot/initramfs.img
+
+    # Optional: Remove GRUB (commented out)
+    # echo "[+] Removing GRUB (optional)..."
+    # dnf remove -y grub2 grub2-efi grub2-tools
 
     # User setup
     if [[ "$hardware" == "hardware" ]]; then
@@ -174,18 +226,16 @@ sudo bash <<'EOF'
     # rfkill unblock bluetooth
     # modprobe btusb || true
     systemctl enable NetworkManager NetworkManager-dispatcher
-    if [[ "$howmuch" == "max" ]]; then
-        if [[ "$hardware" == "hardware" ]]; then
-            systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
-        else
-            systemctl enable ly cronie ananicy-cpp sshd cronie
-        fi
+    if [[ "$hardware" == "hardware" ]]; then
+        systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
         if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
             systemctl enable bluetooth
         fi
         if [[ "$extra" == "laptop" ]]; then
             systemctl enable tlp
         fi
+    else
+        systemctl enable ly cronie ananicy-cpp sshd
     fi
     systemctl mask systemd-rfkill systemd-rfkill.socket
     systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
@@ -203,15 +253,17 @@ sudo bash <<'EOF'
     firewall-cmd --permanent --add-service=http
     firewall-cmd --permanent --add-service=https
     firewall-cmd --permanent --add-service=ssh
+    firewall-cmd --permanent --add-service=dns
+    firewall-cmd --permanent --add-service=dhcp
     firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
     firewall-cmd --set-log-denied=all
     # Create and assign a zone for virbr0
     firewall-cmd --permanent --new-zone=libvirt
     firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
     # Allow DHCP (ports 67, 68 UDP) and DNS (53 UDP)
-    firewall-cmd --permanent --zone=libvirt --add-port=67/udp
-    firewall-cmd --permanent --zone=libvirt --add-port=68/udp
-    firewall-cmd --permanent --zone=libvirt --add-port=53/udp
+    # firewall-cmd --permanent --zone=libvirt --add-port=67/udp
+    # firewall-cmd --permanent --zone=libvirt --add-port=68/udp
+    # firewall-cmd --permanent --zone=libvirt --add-port=53/udp
     # Enable masquerading for routed traffic (NAT)
     firewall-cmd --permanent --add-masquerade
     firewall-cmd --reload
@@ -224,11 +276,11 @@ EOF
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Configure static IP, gateway, and custom DNS
-sudo tee /etc/NetworkManager/conf.d/dns.conf > /dev/null <<EOF
+sudo tee /etc/NetworkManager/conf.d/dns.conf >/dev/null <<EOF
 [main]
 dns=none
 EOF
-sudo tee /etc/resolv.conf > /dev/null <<EOF
+sudo tee /etc/resolv.conf >/dev/null <<EOF
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 EOF
