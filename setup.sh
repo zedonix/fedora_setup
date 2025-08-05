@@ -88,6 +88,33 @@ sudo zig build installexe
 sudo systemctl enable ly.service
 sudo systemctl disable getty@tty2.service
 
+# Updating SElinux rule for ly
+cd ~/Downloads/
+cat <<EOF > ly.te
+module ly 1.0;
+
+require {
+    type init_t;
+    type var_log_t;
+    type tty_device_t;
+    type pam_var_run_t;
+    type xserver_t;
+    class unix_stream_socket connectto;
+    class file { read open write getattr };
+    class chr_file { read write open ioctl };
+    class process { transition };
+}
+
+# Allow ly to read tty and log
+allow init_t tty_device_t:chr_file { read write open ioctl };
+allow init_t var_log_t:file { open read write };
+allow init_t pam_var_run_t:file { getattr open read };
+allow init_t xserver_t:unix_stream_socket connectto;
+EOF
+checkmodule -M -m -o ly.mod ly.te
+semodule_package -o ly.pp -m ly.mod
+sudo semodule -i ly.pp
+
 # eza
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
 tar -xzf eza_x86_64-unknown-linux-gnu.tar.gz
