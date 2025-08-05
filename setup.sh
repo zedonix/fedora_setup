@@ -57,14 +57,16 @@ fi
 
 # Install stuff
 # dnf mirror
-sudo bash <<'EOF'
-echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
-echo 'max_parallel_downloads=5' >> /etc/dnf/dnf.conf
-echo 'deltarpm=True' >> /etc/dnf/dnf.conf
+sudo tee -a /etc/dnf/dnf.conf <<EOF
+fastestmirror=True
+max_parallel_downloads=5
+deltarpm=True
+assumeyes=True
+gpgcheck=True
 EOF
 ## Adding repos
-sudo dnf copr enable solopasha/hyprland
-sudo dnf copr enable maximizerr/SwayAura
+sudo dnf -y copr enable solopasha/hyprland
+sudo dnf -y copr enable maximizerr/SwayAura
 
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
