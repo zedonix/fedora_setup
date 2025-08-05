@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ——————————————————————————————————————————————————————————————————————————
 # Redirect all output (stdout & stderr) into the user’s home directory log
 LOGFILE="${HOME}/fedora_setup.log"
 # ensure log exists and is owned by the user
 : > "${LOGFILE}"
 exec > >(tee -a "$LOGFILE") 2>&1
-# ——————————————————————————————————————————————————————————————————————————
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
@@ -82,14 +80,13 @@ xargs sudo dnf install -y <pkglist.txt
 # Ly Setup
 sudo dnf install -y kernel-devel pam-devel libxcb-devel zig
 git clone https://codeberg.org/AnErrupTion/ly.git ~/Downloads/
-cd ~/Downloads/ly
+cd ~/Downloads/
 zig build
 sudo zig build installexe
 sudo systemctl enable ly.service
 sudo systemctl disable getty@tty2.service
 
 # Updating SElinux rule for ly
-cd ~/Downloads/
 cat <<EOF > ly.te
 module ly 1.0;
 
