@@ -65,7 +65,6 @@ EOF
 ## Adding repos
 sudo dnf copr enable solopasha/hyprland
 sudo dnf copr enable maximizerr/SwayAura
-sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
 
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
