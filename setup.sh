@@ -11,48 +11,48 @@ username=piyush
 # First choice: vm or hardware
 echo "Choose one:"
 select hardware in "vm" "hardware"; do
-    [[ -n $hardware ]] && break
-    echo "Invalid choice. Please select 1 for vm or 2 for hardware."
+  [[ -n $hardware ]] && break
+  echo "Invalid choice. Please select 1 for vm or 2 for hardware."
 done
 
 # extra choice: laptop or bluetooth or none
 if [[ "$hardware" == "hardware" ]]; then
-    echo "Choose one:"
-    select extra in "laptop" "bluetooth" "none"; do
-        [[ -n $extra ]] && break
-        echo "Invalid choice."
-    done
+  echo "Choose one:"
+  select extra in "laptop" "bluetooth" "none"; do
+    [[ -n $extra ]] && break
+    echo "Invalid choice."
+  done
 else
-    extra="none"
+  extra="none"
 fi
 
 # Which type of packages?
 # Main package selection
 case "$hardware" in
 vm)
-    sed -n '1p;3p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
-    ;;
+  sed -n '1p;3p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+  ;;
 hardware)
-    # For hardware:max, we will add lines 5 and/or 6 later based on $extra
-    sed -n '1,4p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
-    ;;
+  # For hardware:max, we will add lines 5 and/or 6 later based on $extra
+  sed -n '1,4p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+  ;;
 esac
 
 # For hardware:max, add lines 5 and/or 6 based on $extra
 if [[ "$hardware" == "hardware" ]]; then
-    case "$extra" in
-    laptop)
-        # Add both line 5 and 6
-        sed -n '5,6p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
-        ;;
-    bluetooth)
-        # Add only line 5
-        sed -n '5p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
-        ;;
-    none)
-        # Do not add line 5 or 6
-        ;;
-    esac
+  case "$extra" in
+  laptop)
+    # Add both line 5 and 6
+    sed -n '5,6p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+    ;;
+  bluetooth)
+    # Add only line 5
+    sed -n '5p' pkgs.txt | tr ' ' '\n' | grep -v '^$' >>pkglist.txt
+    ;;
+  none)
+    # Do not add line 5 or 6
+    ;;
+  esac
 fi
 
 # Install stuff
@@ -84,10 +84,10 @@ curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevk
 unzip IosevkaTerm.zip
 rm IosevkaTerm.zip
 # wikiman
-RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest \
-    | grep "browser_download_url" \
-    | grep -E "wikiman.*\.rpm" \
-    | cut -d '"' -f 4)
+RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest |
+  grep "browser_download_url" |
+  grep -E "wikiman.*\.rpm" |
+  cut -d '"' -f 4)
 curl -LO "$RPM_URL"
 RPM_FILE="${RPM_URL##*/}"
 sudo dnf install -y "$RPM_FILE"
@@ -110,166 +110,132 @@ git clone https://github.com/zedonix/GruvboxQT.git ~/Documents/default/GruvboxQT
 git clone https://github.com/zedonix/fedora_setup.git ~/Documents/default/fedora_setup
 
 if [[ -d ~/Documents/default/dotfiles ]]; then
-    cp ~/Documents/default/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
-    cp ~/Documents/default/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
-    cp -r ~/Documents/default/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
-    ln -sf ~/Documents/default/dotfiles/.gtk-bookmarks ~/.gtk-bookmarks || true
+  cp ~/Documents/default/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
+  cp ~/Documents/default/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
+  cp -r ~/Documents/default/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
+  ln -sf ~/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
+  ln -sf ~/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
+  ln -sf ~/Documents/default/dotfiles/.gtk-bookmarks ~/.gtk-bookmarks || true
 
-    for link in ~/Documents/default/dotfiles/.config/*; do
-        ln -sf "$link" ~/.config/ 2>/dev/null || true
-    done
-    for link in ~/Documents/default/scripts/bin/*; do
-        ln -sf "$link" ~/.local/bin 2>/dev/null || true
-    done
+  for link in ~/Documents/default/dotfiles/.config/*; do
+    ln -sf "$link" ~/.config/ 2>/dev/null || true
+  done
+  for link in ~/Documents/default/scripts/bin/*; do
+    ln -sf "$link" ~/.local/bin 2>/dev/null || true
+  done
 fi
 # Clone tpm
 git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 
 sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
-    # Systemd boot setup
-    dracut --force
-    # grub2-mkconfig -o /boot/grub2/grub.cfg
+  dracut --force
+  sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
+  #sed -i 's/^#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
+  grub2-mkconfig -o /boot/grub2/grub.cfg
 
-    # Variables
-    EFI_DIR="/boot/efi"
-    LOADER_DIR="$EFI_DIR/loader"
-    ENTRIES_DIR="$LOADER_DIR/entries"
-    ROOT_UUID=$(blkid -s UUID -o value /dev/disk/by-label/root 2>/dev/null || findmnt / -no SOURCE | xargs blkid -s UUID -o value)
+  # User setup
+  if [[ "$hardware" == "hardware" ]]; then
+      usermod -aG wheel,video,audio,lp,scanner,kvm,libvirt,docker "$username"
+  else
+      usermod -aG wheel,video,audio,lp "$username"
+  fi
 
+  # Sudo Configuration
+  echo "%wheel ALL=(ALL) ALL" >/etc/sudoers.d/wheel
+  echo "Defaults timestamp_timeout=-1" >/etc/sudoers.d/timestamp
+  chmod 440 /etc/sudoers.d/wheel /etc/sudoers.d/timestamp
 
-    # setup systemd boot
-    bootctl --path="$EFI_DIR" install
-    mkdir -p "$LOADER_DIR"
-cat > "$LOADER_DIR/loader.conf" <<EOF
-default fedora
-timeout 3
-console-mode max
-editor no
-EOF
+  # Root .config
+  mkdir -p ~/.config ~/.local/state/bash ~/.local/state/zsh
+  echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' >~/.bash_profile
+  touch ~/.local/state/zsh/history ~/.local/state/bash/history
+  ln -sf /home/$username/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
+  ln -sf /home/$username/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
+  ln -sf /home/$username/Documents/default/dotfiles/.config/nvim/ ~/.config
 
-    mkdir -p "$ENTRIES_DIR"
-cat > "$ENTRIES_DIR/fedora.conf" <<EOF
-title Fedora 42
-linux /vmlinuz
-initrd /initramfs.img
-options root=UUID=$ROOT_UUID rw splash
-EOF
+  # Setup QT theme
+  THEME_SRC="/home/$username/Documents/default/GruvboxQT/"
+  THEME_DEST="/usr/share/Kvantum/Gruvbox"
+  mkdir -p "$THEME_DEST"
+  cp "$THEME_SRC/gruvbox-kvantum.kvconfig" "$THEME_DEST/Gruvbox.kvconfig" 2>/dev/null || true
+  cp "$THEME_SRC/gruvbox-kvantum.svg" "$THEME_DEST/Gruvbox.svg" 2>/dev/null || true
 
-    # Update kernel/initramfs symlinks
-    KERNEL_IMG=$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*.x86_64' | sort -V | tail -n1)
-    INITRD_IMG=$(find /boot -maxdepth 1 -type f -name 'initramfs-*.img' ! -name '*rescue*' | sort -V | tail -n1)
-    ln -sf "$KERNEL_IMG" /boot/vmlinuz
-    ln -sf "$INITRD_IMG" /boot/initramfs.img
+  # Install CachyOS Ananicy Rules
+  ANANICY_RULES_SRC="/home/$username/Documents/default/ananicy-rules"
+  mkdir -p /etc/ananicy.d
 
-    # Optional: Remove GRUB (commented out)
-    # echo "[+] Removing GRUB (optional)..."
-    # dnf remove -y grub2 grub2-efi grub2-tools
+  cp -r "$ANANICY_RULES_SRC/00-default" /etc/ananicy.d/ 2>/dev/null || true
+  cp "$ANANICY_RULES_SRC/"*.rules /etc/ananicy.d/ 2>/dev/null || true
+  cp "$ANANICY_RULES_SRC/00-cgroups.cgroups" /etc/ananicy.d/ 2>/dev/null || true
+  cp "$ANANICY_RULES_SRC/00-types.types" /etc/ananicy.d/ 2>/dev/null || true
+  cp "$ANANICY_RULES_SRC/ananicy.conf" /etc/ananicy.d/ 2>/dev/null || true
 
-    # User setup
-    if [[ "$hardware" == "hardware" ]]; then
-        usermod -aG wheel,video,audio,lp,scanner,kvm,libvirt,docker "$username"
-    else
-        usermod -aG wheel,video,audio,lp "$username"
-    fi
+  chmod -R 644 /etc/ananicy.d/*
+  chmod 755 /etc/ananicy.d/00-default
 
-    # Sudo Configuration
-    echo "%wheel ALL=(ALL) ALL" >/etc/sudoers.d/wheel
-    echo "Defaults timestamp_timeout=-1" >/etc/sudoers.d/timestamp
-    chmod 440 /etc/sudoers.d/wheel /etc/sudoers.d/timestamp
+  # Firefox policy
+  mkdir -p /etc/firefox/policies
+  ln -sf "/home/$username/Documents/default/dotfiles/policies.json" /etc/firefox/policies/policies.json 2>/dev/null || true
 
-    # Root .config
-    mkdir -p ~/.config ~/.local/state/bash ~/.local/state/zsh
-    echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' >~/.bash_profile
-    touch ~/.local/state/zsh/history ~/.local/state/bash/history
-    ln -sf /home/$username/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
-    ln -sf /home/$username/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
-    ln -sf /home/$username/Documents/default/dotfiles/.config/nvim/ ~/.config
+  # tldr wiki setup
+  curl -L "https://raw.githubusercontent.com/filiparag/wikiman/master/Makefile" -o "wikiman-makefile"
+  make -f ./wikiman-makefile source-tldr
+  make -f ./wikiman-makefile source-install
+  make -f ./wikiman-makefile clean
 
-    # Setup QT theme
-    THEME_SRC="/home/$username/Documents/default/GruvboxQT/"
-    THEME_DEST="/usr/share/Kvantum/Gruvbox"
-    mkdir -p "$THEME_DEST"
-    cp "$THEME_SRC/gruvbox-kvantum.kvconfig" "$THEME_DEST/Gruvbox.kvconfig" 2>/dev/null || true
-    cp "$THEME_SRC/gruvbox-kvantum.svg" "$THEME_DEST/Gruvbox.svg" 2>/dev/null || true
+  # zram config
+  sudo mkdir -p /etc/systemd/zram-generator.conf.d
+  printf "[zram0]\nzram-size = min(ram / 2, 4096)\ncompression-algorithm = zstd\nswap-priority = 100\nfs-type = swap\n" \
+      | sudo tee /etc/systemd/zram-generator.conf.d/00-zram.conf > /dev/null
 
-    # Install CachyOS Ananicy Rules
-    ANANICY_RULES_SRC="/home/$username/Documents/default/ananicy-rules"
-    mkdir -p /etc/ananicy.d
+  # services
+  # rfkill unblock bluetooth
+  # modprobe btusb || true
+  systemctl enable NetworkManager NetworkManager-dispatcher
+  if [[ "$hardware" == "hardware" ]]; then
+      systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
+      if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
+          systemctl enable bluetooth
+      fi
+      if [[ "$extra" == "laptop" ]]; then
+          systemctl enable tlp
+      fi
+  else
+      systemctl enable ly cronie ananicy-cpp sshd
+  fi
+  systemctl mask systemd-rfkill systemd-rfkill.socket
+  systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
 
-    cp -r "$ANANICY_RULES_SRC/00-default" /etc/ananicy.d/ 2>/dev/null || true
-    cp "$ANANICY_RULES_SRC/"*.rules /etc/ananicy.d/ 2>/dev/null || true
-    cp "$ANANICY_RULES_SRC/00-cgroups.cgroups" /etc/ananicy.d/ 2>/dev/null || true
-    cp "$ANANICY_RULES_SRC/00-types.types" /etc/ananicy.d/ 2>/dev/null || true
-    cp "$ANANICY_RULES_SRC/ananicy.conf" /etc/ananicy.d/ 2>/dev/null || true
+  # prevent networkmanager from using systemd-resolved
+  mkdir -p /etc/networkmanager/conf.d
+  echo -e "[main]\nsystemd-resolved=false" | tee /etc/networkmanager/conf.d/no-systemd-resolved.conf >/dev/null
 
-    chmod -R 644 /etc/ananicy.d/*
-    chmod 755 /etc/ananicy.d/00-default
+  # set dns handling to 'default'
+  echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
 
-    # Firefox policy
-    mkdir -p /etc/firefox/policies
-    ln -sf "/home/$username/Documents/default/dotfiles/policies.json" /etc/firefox/policies/policies.json 2>/dev/null || true
-
-    # tldr wiki setup
-    curl -L "https://raw.githubusercontent.com/filiparag/wikiman/master/Makefile" -o "wikiman-makefile"
-    make -f ./wikiman-makefile source-tldr
-    make -f ./wikiman-makefile source-install
-    make -f ./wikiman-makefile clean
-
-    # zram config
-    sudo mkdir -p /etc/systemd/zram-generator.conf.d
-    printf "[zram0]\nzram-size = min(ram / 2, 4096)\ncompression-algorithm = zstd\nswap-priority = 100\nfs-type = swap\n" \
-        | sudo tee /etc/systemd/zram-generator.conf.d/00-zram.conf > /dev/null
-
-    # services
-    # rfkill unblock bluetooth
-    # modprobe btusb || true
-    systemctl enable NetworkManager NetworkManager-dispatcher
-    if [[ "$hardware" == "hardware" ]]; then
-        systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
-        if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
-            systemctl enable bluetooth
-        fi
-        if [[ "$extra" == "laptop" ]]; then
-            systemctl enable tlp
-        fi
-    else
-        systemctl enable ly cronie ananicy-cpp sshd
-    fi
-    systemctl mask systemd-rfkill systemd-rfkill.socket
-    systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
-
-    # prevent networkmanager from using systemd-resolved
-    mkdir -p /etc/networkmanager/conf.d
-    echo -e "[main]\nsystemd-resolved=false" | tee /etc/networkmanager/conf.d/no-systemd-resolved.conf >/dev/null
-
-    # set dns handling to 'default'
-    echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
-
-    # firewalld setup
-    firewall-cmd --set-default-zone=public
-    firewall-cmd --permanent --remove-service=dhcpv6-client
-    firewall-cmd --permanent --add-service=http
-    firewall-cmd --permanent --add-service=https
-    firewall-cmd --permanent --add-service=ssh
-    firewall-cmd --permanent --add-service=dns
-    firewall-cmd --permanent --add-service=dhcp
-    firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
-    firewall-cmd --set-log-denied=all
-    # Create and assign a zone for virbr0
-    firewall-cmd --permanent --new-zone=libvirt
-    firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
-    # Allow DHCP (ports 67, 68 UDP) and DNS (53 UDP)
-    # firewall-cmd --permanent --zone=libvirt --add-port=67/udp
-    # firewall-cmd --permanent --zone=libvirt --add-port=68/udp
-    # firewall-cmd --permanent --zone=libvirt --add-port=53/udp
-    # Enable masquerading for routed traffic (NAT)
-    firewall-cmd --permanent --add-masquerade
-    firewall-cmd --reload
-    systemctl enable firewalld
-    # echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
-    # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
+  # firewalld setup
+  firewall-cmd --set-default-zone=public
+  firewall-cmd --permanent --remove-service=dhcpv6-client
+  firewall-cmd --permanent --add-service=http
+  firewall-cmd --permanent --add-service=https
+  firewall-cmd --permanent --add-service=ssh
+  firewall-cmd --permanent --add-service=dns
+  firewall-cmd --permanent --add-service=dhcp
+  firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
+  firewall-cmd --set-log-denied=all
+  # Create and assign a zone for virbr0
+  firewall-cmd --permanent --new-zone=libvirt
+  firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
+  # Allow DHCP (ports 67, 68 UDP) and DNS (53 UDP)
+  # firewall-cmd --permanent --zone=libvirt --add-port=67/udp
+  # firewall-cmd --permanent --zone=libvirt --add-port=68/udp
+  # firewall-cmd --permanent --zone=libvirt --add-port=53/udp
+  # Enable masquerading for routed traffic (NAT)
+  firewall-cmd --permanent --add-masquerade
+  firewall-cmd --reload
+  systemctl enable firewalld
+  # echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
+  # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
 EOF
 
 # Flatpak setup
@@ -288,7 +254,7 @@ sudo systemctl restart NetworkManager
 
 # A cron job
 (
-    crontab -l 2>/dev/null
-    echo "*/5 * * * * battery-alert.sh"
-    echo "@daily $(which trash-empty) 30"
+  crontab -l 2>/dev/null
+  echo "*/5 * * * * battery-alert.sh"
+  echo "@daily $(which trash-empty) 30"
 ) | sort -u | crontab -
