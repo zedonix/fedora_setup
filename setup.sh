@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ——————————————————————————————————————————————————————————————————————————
+# Redirect all output (stdout & stderr) into the user’s home directory log
+LOGFILE="${HOME}/fedora_setup.log"
+# ensure log exists and is owned by the user
+: > "${LOGFILE}"
+exec > >(tee -a "$LOGFILE") 2>&1
+# ——————————————————————————————————————————————————————————————————————————
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
 
@@ -200,7 +208,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   # modprobe btusb || true
   systemctl enable NetworkManager NetworkManager-dispatcher
   if [[ "$hardware" == "hardware" ]]; then
-      systemctl enable ly fstrim.timer acpid cronie ananicy-cpp libvirtd.socket cups ipp-usb docker.socket sshd
+      systemctl enable ly fstrim.timer acpid crond ananicy-cpp libvirtd.socket cups ipp-usb docker.socket
       if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
           systemctl enable bluetooth
       fi
@@ -208,7 +216,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
           systemctl enable tlp
       fi
   else
-      systemctl enable ly cronie ananicy-cpp sshd
+      systemctl enable ly crond ananicy-cpp
   fi
   systemctl mask systemd-rfkill systemd-rfkill.socket
   systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
@@ -221,7 +229,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
 
   # firewalld setup
-  firewall-cmd --set-default-zone=public
+  # firewall-cmd --set-default-zone=public
   firewall-cmd --permanent --remove-service=dhcpv6-client
   firewall-cmd --permanent --add-service=http
   firewall-cmd --permanent --add-service=https
