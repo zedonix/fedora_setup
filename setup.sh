@@ -60,10 +60,12 @@ fi
 sudo bash <<'EOF'
 echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
 echo 'max_parallel_downloads=5' >> /etc/dnf/dnf.conf
+echo 'deltarpm=True' >> /etc/dnf/dnf.conf
 EOF
 ## Adding repos
 sudo dnf copr enable solopasha/hyprland
 sudo dnf copr enable maximizerr/SwayAura
+sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
 
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
