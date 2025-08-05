@@ -56,6 +56,11 @@ if [[ "$hardware" == "hardware" ]]; then
 fi
 
 # Install stuff
+# dnf mirror
+sudo bash <<'EOF'
+echo 'fastestmirror=True' >> /etc/dnf/dnf.conf
+echo 'max_parallel_downloads=5' >> /etc/dnf/dnf.conf
+EOF
 ## Adding repos
 sudo dnf copr enable solopasha/hyprland
 sudo dnf copr enable maximizerr/SwayAura
@@ -130,7 +135,6 @@ git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   dracut --force
   sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=false/' /etc/default/grub
-  #sed -i 's/^#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
   grub2-mkconfig -o /boot/grub2/grub.cfg
 
   # User setup
