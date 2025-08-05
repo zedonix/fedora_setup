@@ -234,7 +234,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   firewall-cmd --permanent --remove-service=dhcpv6-client
   firewall-cmd --permanent --add-service=http
   firewall-cmd --permanent --add-service=https
-  firewall-cmd --permanent --add-service=ssh
+  # firewall-cmd --permanent --add-service=ssh
   firewall-cmd --permanent --add-service=dns
   firewall-cmd --permanent --add-service=dhcp
   firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.0.0/24" accept'
