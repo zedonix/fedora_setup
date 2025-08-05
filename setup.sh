@@ -82,7 +82,7 @@ xargs sudo dnf install -y <pkglist.txt
 # Ly Setup
 sudo dnf install -y kernel-devel pam-devel libxcb-devel zig
 git clone https://codeberg.org/AnErrupTion/ly.git ~/Downloads/
-cd ~/Downloads/
+cd ~/Downloads/ly
 zig build
 sudo zig build installexe
 sudo systemctl enable ly.service
@@ -100,6 +100,7 @@ curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevk
 unzip IosevkaTerm.zip
 rm IosevkaTerm.zip
 # wikiman
+cd ~/Downloads/
 RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest |
   grep "browser_download_url" |
   grep -E "wikiman.*\.rpm" |
