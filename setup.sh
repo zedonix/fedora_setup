@@ -77,59 +77,8 @@ sudo dnf -y copr enable maximizerr/SwayAura
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
 
-# Ly Setup
-cd "$(mktemp -d)"
-git clone https://codeberg.org/AnErrupTion/ly.git
-cd ly
-zig build
-sudo zig build installexe
-
-# Fix broken Fedora PAM config for ly
-sudo tee /etc/pam.d/ly >/dev/null <<'EOF'
-#%PAM-1.0
-auth       include      system-auth
-account    include      system-auth
-password   include      system-auth
-session    include      system-auth
-
-# Optional: start keyring/wallets (safe even if not installed)
-auth       optional     pam_gnome_keyring.so
-session    optional     pam_gnome_keyring.so auto_start
-session    optional     pam_kwallet5.so auto_start
-EOF
-
-# Write a static, tested SELinux policy for ly
-cat <<'EOF' > ly.te
-module ly 1.0;
-
-require {
-    type init_t;
-    type tty_device_t;
-    type var_log_t;
-    type pam_var_run_t;
-    type xserver_t;
-    class chr_file { read write open ioctl };
-    class file { open read write getattr };
-    class unix_stream_socket connectto;
-}
-
-# Allow ly to access the TTY, logs, PAM socket, and X socket
-allow init_t tty_device_t:chr_file { read write open ioctl };
-allow init_t var_log_t:file { open read write };
-allow init_t pam_var_run_t:file { getattr open read };
-allow init_t xserver_t:unix_stream_socket connectto;
-EOF
-
-# Compile & install it
-checkmodule -M -m -o ly.mod ly.te
-semodule_package -o ly.pp -m ly.mod
-sudo semodule -i ly.pp
-
-sudo systemctl enable ly.service
-sudo systemctl set-default multi-user.target
-sudo systemctl disable getty@tty2.service
-
 # eza
+cd "$(mktemp -d)"
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
 tar -xzf eza_x86_64-unknown-linux-gnu.tar.gz
 sudo mv eza /usr/local/bin/
@@ -246,21 +195,29 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   # services
   # rfkill unblock bluetooth
   # modprobe btusb || true
-  systemctl enable NetworkManager NetworkManager-dispatcher
+  systemctl enable NetworkManager NetworkManager-dispatcher greetd crond ananicy-cpp
   if [[ "$hardware" == "hardware" ]]; then
-      systemctl enable ly fstrim.timer acpid crond ananicy-cpp libvirtd.socket cups ipp-usb docker.socket
+      systemctl enable fstrim.timer acpid libvirtd.socket cups ipp-usb docker.socket
       if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
           systemctl enable bluetooth
       fi
       if [[ "$extra" == "laptop" ]]; then
           systemctl enable tlp
       fi
-  else
-      systemctl enable ly crond ananicy-cpp
   fi
   systemctl mask systemd-rfkill systemd-rfkill.socket
-  systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved
+  systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved getty@tty2
 
+  # Greetd setup
+  printf '%s\n' \
+    '# Use Tuigreet as the greeter' \
+    '[greeter]' \
+    'path = "/usr/bin/tuigreet"' \
+    '' \
+    '# Define your sessions here. Adjust '\''sway'\'' to your compositor if needed.' \
+    '[session.sway]' \
+    'command = ["/usr/bin/sway"]' \
+    | sudo tee /etc/greetd/config.toml >/dev/null
   # prevent networkmanager from using systemd-resolved
   mkdir -p /etc/networkmanager/conf.d
   printf "[main]\nsystemd-resolved=false\n" | sudo tee /etc/networkmanager/conf.d/no-systemd-resolved.conf
