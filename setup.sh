@@ -102,9 +102,10 @@ EOF
 # Updating SElinux rule for ly
 # Trigger a single run of ly under permissive so denials are logged
 sudo setenforce 0
-sudo systemctl restart ly.service || true
-sleep 3
-sudo systemctl stop ly.service
+sudo setsid /usr/bin/ly &> /dev/null &
+LY_PID=$!
+sleep 5
+sudo kill "$LY_PID" || true
 # Build the policy from the logged AVC denials
 sudo ausearch -m avc -c ly --raw | audit2allow -M ly_custom
 # Install the custom module
