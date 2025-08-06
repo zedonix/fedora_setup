@@ -104,6 +104,7 @@ EOF
 sudo setenforce 0
 sudo systemctl restart ly.service || true
 sleep 3
+sudo systemctl stop ly.service
 # Build the policy from the logged AVC denials
 sudo ausearch -m avc -c ly --raw | audit2allow -M ly_custom
 # Install the custom module
