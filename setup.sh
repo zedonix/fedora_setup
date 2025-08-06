@@ -78,7 +78,6 @@ sudo dnf -y copr enable maximizerr/SwayAura
 xargs sudo dnf install -y <pkglist.txt
 
 # Ly Setup
-sudo dnf install -y kernel-devel pam-devel libxcb-devel zig
 cd "$(mktemp -d)"
 git clone https://codeberg.org/AnErrupTion/ly.git
 cd ly
