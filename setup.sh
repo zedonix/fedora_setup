@@ -85,32 +85,19 @@ zig build
 sudo zig build installexe
 
 # Updating SElinux rule for ly
-cat <<EOF > ly.te
-module ly 1.0;
-
-require {
-    type init_t;
-    type var_log_t;
-    type tty_device_t;
-    type pam_var_run_t;
-    type xserver_t;
-    class unix_stream_socket connectto;
-    class file { read open write getattr };
-    class chr_file { read write open ioctl };
-    class process { transition };
-}
-
-# Allow ly to read tty and log
-allow init_t tty_device_t:chr_file { read write open ioctl };
-allow init_t var_log_t:file { open read write };
-allow init_t pam_var_run_t:file { getattr open read };
-allow init_t xserver_t:unix_stream_socket connectto;
-EOF
-checkmodule -M -m -o ly.mod ly.te
-semodule_package -o ly.pp -m ly.mod
-sudo semodule -i ly.pp
+# Trigger a single run of ly under permissive so denials are logged
+sudo setenforce 0
+sudo systemctl start ly.service || true
+sleep 2
+sudo systemctl stop ly.service
+# Build the policy from the logged AVC denials
+sudo ausearch -c ly --raw | audit2allow -M ly_custom
+# Install the custom module
+sudo semodule -i ly_custom.pp
+sudo setenforce 1
 
 sudo systemctl enable ly.service
+sudo systemctl set-default multi-user.target
 sudo systemctl disable getty@tty2.service
 
 # eza
@@ -225,9 +212,8 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   make -f ./wikiman-makefile clean
 
   # zram config
-  sudo mkdir -p /etc/systemd/zram-generator.conf.d
-  printf "[zram0]\nzram-size = min(ram / 2, 4096)\ncompression-algorithm = zstd\nswap-priority = 100\nfs-type = swap\n" \
-      | sudo tee /etc/systemd/zram-generator.conf.d/00-zram.conf > /dev/null
+  mkdir -p /etc/systemd/zram-generator.conf.d
+  printf "[zram0]\nzram-size=min(ram/2,4096)\ncompression-algorithm=zstd\nswap-priority=100\nfs-type=swap\n"|tee/etc/systemd/zram-generator.conf.d/00-zram.conf>/dev/null
 
   # services
   # rfkill unblock bluetooth
@@ -249,7 +235,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
 
   # prevent networkmanager from using systemd-resolved
   mkdir -p /etc/networkmanager/conf.d
-  echo -e "[main]\nsystemd-resolved=false" | tee /etc/networkmanager/conf.d/no-systemd-resolved.conf >/dev/null
+  printf "[main]\nsystemd-resolved=false\n" | sudo tee /etc/networkmanager/conf.d/no-systemd-resolved.conf
 
   # firewalld setup
   # firewall-cmd --set-default-zone=public
@@ -272,22 +258,16 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   firewall-cmd --permanent --add-masquerade
   firewall-cmd --reload
   systemctl enable firewalld
-  # echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-firewalld.conf
-  # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
+  # echo 'net.ipv4.ip_forward = 1' | tee -a /etc/sysctl.d/99-firewalld.conf
+  # sysctl -p /etc/sysctl.d/99-firewalld.conf
 EOF
 
 # Configure static IP, gateway, and custom DNS
 sudo tee /etc/NetworkManager/conf.d/dns.conf >/dev/null <<EOF
 [main]
 dns=none
+systemd-resolved=false
 EOF
-sudo rm -f /etc/resolv.conf
-sudo touch /etc/resolv.conf
-sudo tee /etc/resolv.conf >/dev/null <<EOF
-nameserver 1.1.1.1
-nameserver 1.0.0.1
-EOF
-sudo chattr +i /etc/resolv.conf
 sudo systemctl restart NetworkManager
 
 # Flatpak setup
