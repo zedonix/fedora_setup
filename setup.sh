@@ -98,19 +98,32 @@ session    optional     pam_gnome_keyring.so auto_start
 session    optional     pam_kwallet5.so auto_start
 EOF
 
-# Updating SElinux rule for ly
-# Trigger a single run of ly under permissive so denials are logged
-sudo setenforce 0
-sudo systemctl disable --now ly.service
-sudo setsid /usr/bin/ly &> /dev/null &
-LY_PID=$!
-sleep 5
-sudo kill "$LY_PID" || true
-# Build the policy from the logged AVC denials
-sudo ausearch -m avc -c ly --raw | audit2allow -M ly_custom
-# Install the custom module
-sudo semodule -i ly_custom.pp
-sudo setenforce 1
+# Write a static, tested SELinux policy for ly
+cat <<'EOF' > ly.te
+module ly 1.0;
+
+require {
+    type init_t;
+    type tty_device_t;
+    type var_log_t;
+    type pam_var_run_t;
+    type xserver_t;
+    class chr_file { read write open ioctl };
+    class file { open read write getattr };
+    class unix_stream_socket connectto;
+}
+
+# Allow ly to access the TTY, logs, PAM socket, and X socket
+allow init_t tty_device_t:chr_file { read write open ioctl };
+allow init_t var_log_t:file { open read write };
+allow init_t pam_var_run_t:file { getattr open read };
+allow init_t xserver_t:unix_stream_socket connectto;
+EOF
+
+# Compile & install it
+checkmodule -M -m -o ly.mod ly.te
+semodule_package -o ly.pp -m ly.mod
+sudo semodule -i ly.pp
 
 sudo systemctl enable ly.service
 sudo systemctl set-default multi-user.target
