@@ -102,6 +102,7 @@ EOF
 # Updating SElinux rule for ly
 # Trigger a single run of ly under permissive so denials are logged
 sudo setenforce 0
+sudo systemctl disable --now ly.service
 sudo setsid /usr/bin/ly &> /dev/null &
 LY_PID=$!
 sleep 5
