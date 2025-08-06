@@ -4,7 +4,7 @@ set -euo pipefail
 # Redirect all output (stdout & stderr) into the user’s home directory log
 LOGFILE="${HOME}/fedora_setup.log"
 # ensure log exists and is owned by the user
-: > "${LOGFILE}"
+: >"${LOGFILE}"
 exec > >(tee -a "$LOGFILE") 2>&1
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -79,8 +79,9 @@ xargs sudo dnf install -y <pkglist.txt
 
 # Ly Setup
 sudo dnf install -y kernel-devel pam-devel libxcb-devel zig
-git clone https://codeberg.org/AnErrupTion/ly.git ~/Downloads/
-cd ~/Downloads/
+cd "$(mktemp -d)"
+git clone https://codeberg.org/AnErrupTion/ly.git
+cd ly
 zig build
 sudo zig build installexe
 
@@ -105,14 +106,7 @@ curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_6
 tar -xzf eza_x86_64-unknown-linux-gnu.tar.gz
 sudo mv eza /usr/local/bin/
 sudo chmod +x /usr/local/bin/eza
-# Iosevka
-mkdir -p ~/.local/share/fonts/iosevka
-cd ~/.local/share/fonts/iosevka
-curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip
-unzip IosevkaTerm.zip
-rm IosevkaTerm.zip
 # wikiman
-cd ~/Downloads/
 RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest |
   grep "browser_download_url" |
   grep -E "wikiman.*\.rpm" |
@@ -120,6 +114,12 @@ RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest
 curl -LO "$RPM_URL"
 RPM_FILE="${RPM_URL##*/}"
 sudo dnf install -y "$RPM_FILE"
+# Iosevka
+mkdir -p ~/.local/share/fonts/iosevka
+cd ~/.local/share/fonts/iosevka
+curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip
+unzip IosevkaTerm.zip
+rm IosevkaTerm.zip
 # unp
 python3 -m pip install --user unp
 
@@ -213,7 +213,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
 
   # zram config
   mkdir -p /etc/systemd/zram-generator.conf.d
-  printf "[zram0]\nzram-size=min(ram/2,4096)\ncompression-algorithm=zstd\nswap-priority=100\nfs-type=swap\n"|tee/etc/systemd/zram-generator.conf.d/00-zram.conf>/dev/null
+  printf "[zram0]\nzram-size=min(ram/2,4096)\ncompression-algorithm=zstd\nswap-priority=100\nfs-type=swap\n"| tee /etc/systemd/zram-generator.conf.d/00-zram.conf > /dev/null
 
   # services
   # rfkill unblock bluetooth
@@ -278,4 +278,4 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
   crontab -l 2>/dev/null
   echo "*/5 * * * * battery-alert.sh"
   echo "@daily $(which trash-empty) 30"
-) | sort -u | crontab -
+) | sort -u | uniq | crontab -
