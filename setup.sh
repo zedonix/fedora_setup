@@ -85,6 +85,20 @@ cd ly
 zig build
 sudo zig build installexe
 
+# Fix broken Fedora PAM config for ly
+sudo tee /etc/pam.d/ly >/dev/null <<'EOF'
+#%PAM-1.0
+auth       include      system-auth
+account    include      system-auth
+password   include      system-auth
+session    include      system-auth
+
+# Optional: start keyring/wallets (safe even if not installed)
+auth       optional     pam_gnome_keyring.so
+session    optional     pam_gnome_keyring.so auto_start
+session    optional     pam_kwallet5.so auto_start
+EOF
+
 # Updating SElinux rule for ly
 # Trigger a single run of ly under permissive so denials are logged
 sudo setenforce 0
