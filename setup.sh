@@ -65,7 +65,7 @@ fi
 # dnf mirror
 sudo tee -a /etc/dnf/dnf.conf <<EOF
 fastestmirror=True
-max_parallel_downloads=5
+max_parallel_downloads=10
 deltarpm=True
 assumeyes=True
 gpgcheck=True
@@ -83,8 +83,6 @@ git clone https://codeberg.org/AnErrupTion/ly.git ~/Downloads/
 cd ~/Downloads/
 zig build
 sudo zig build installexe
-sudo systemctl enable ly.service
-sudo systemctl disable getty@tty2.service
 
 # Updating SElinux rule for ly
 cat <<EOF > ly.te
@@ -111,6 +109,9 @@ EOF
 checkmodule -M -m -o ly.mod ly.te
 semodule_package -o ly.pp -m ly.mod
 sudo semodule -i ly.pp
+
+sudo systemctl enable ly.service
+sudo systemctl disable getty@tty2.service
 
 # eza
 curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
@@ -250,9 +251,6 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   mkdir -p /etc/networkmanager/conf.d
   echo -e "[main]\nsystemd-resolved=false" | tee /etc/networkmanager/conf.d/no-systemd-resolved.conf >/dev/null
 
-  # set dns handling to 'default'
-  echo -e "[main]\ndns=default" | tee /etc/networkmanager/conf.d/dns.conf >/dev/null
-
   # firewalld setup
   # firewall-cmd --set-default-zone=public
   firewall-cmd --permanent --remove-service=dhcpv6-client
@@ -278,19 +276,22 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   # sudo sysctl -p /etc/sysctl.d/99-firewalld.conf
 EOF
 
-# Flatpak setup
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
 # Configure static IP, gateway, and custom DNS
 sudo tee /etc/NetworkManager/conf.d/dns.conf >/dev/null <<EOF
 [main]
 dns=none
 EOF
+sudo rm -f /etc/resolv.conf
+sudo touch /etc/resolv.conf
 sudo tee /etc/resolv.conf >/dev/null <<EOF
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 EOF
+sudo chattr +i /etc/resolv.conf
 sudo systemctl restart NetworkManager
+
+# Flatpak setup
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # A cron job
 (
