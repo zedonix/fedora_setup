@@ -63,20 +63,14 @@ fi
 
 # Install stuff
 # dnf mirror
-sudo tee -a /etc/dnf/dnf.conf <<EOF
-fastestmirror=True
-max_parallel_downloads=10
-deltarpm=True
-gpgcheck=True
-EOF
+sudo dnf config-manager --save --setopt=fastestmirror=True
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf upgrade --refresh
 ## Adding repos
 sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf -y copr enable solopasha/hyprland
-sudo dnf -y copr enable maximizerr/SwayAura
+sudo dnf -y copr enable solopasha/hyprland maximizerr/SwayAura
 sudo dnf makecache
 
 # pacstrap of fedora
