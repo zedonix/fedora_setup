@@ -75,7 +75,7 @@ sudo dnf upgrade --refresh
 ## Adding repos
 sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf copr enable solopasha/hyprland:fedora-42-x86_64
+sudo dnf copr enable solopasha/hyprland
 sudo dnf copr enable maximizerr/SwayAura:fedora-42-x86_64
 sudo dnf makecache
 
