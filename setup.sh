@@ -12,6 +12,8 @@ cd "$SCRIPT_DIR"
 
 # Variable set
 username=piyush
+CHROOT="fedora-42-x86_64"
+mock -r "$CHROOT" --init
 
 # Which type of install?
 # First choice: vm or hardware
