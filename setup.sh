@@ -13,7 +13,6 @@ cd "$SCRIPT_DIR"
 # Variable set
 username=piyush
 CHROOT="fedora-42-x86_64"
-mock -r "$CHROOT" --init
 
 # Which type of install?
 # First choice: vm or hardware
@@ -69,17 +68,19 @@ sudo tee -a /etc/dnf/dnf.conf <<EOF
 fastestmirror=True
 max_parallel_downloads=10
 deltarpm=True
-assumeyes=True
 gpgcheck=True
 EOF
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf upgrade --refresh
+sudo dnf install -y mock
+sudo usermod -aG mock "$username"
+sudo mock -r "$CHROOT" --init
 ## Adding repos
 sudo dnf -y copr enable solopasha/hyprland maximizerr/SwayAura
 
 # pacstrap of fedora
-xargs sudo dnf install -y <pkglist.txt
+xargs -a pkglist.txt sudo mock -r "$CHROOT" --install
 
 cd "$(mktemp -d)"
 # wikiman
