@@ -75,6 +75,13 @@ sudo dnf upgrade --refresh
 ## Adding repos
 sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+if ! copr-cli build maximizerr/SwayAura --chroot "$CHROOT"; then
+    echo "ERROR: Chroot $CHROOT not found in maximizerr/SwayAura."
+    echo "Please choose one from the following:"
+    copr-cli list-chroots maximizerr/SwayAura
+    exit 1
+fi
 sudo dnf -y copr enable solopasha/hyprland maximizerr/SwayAura
 
 # pacstrap of fedora
