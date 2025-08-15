@@ -73,14 +73,13 @@ EOF
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf upgrade --refresh
-sudo dnf install -y mock
-sudo usermod -aG mock "$username"
-sudo mock -r "$CHROOT" --init
 ## Adding repos
+sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf -y copr enable solopasha/hyprland maximizerr/SwayAura
 
 # pacstrap of fedora
-xargs -a pkglist.txt sudo mock -r "$CHROOT" --install
+xargs sudo dnf install -y <pkglist.txt
 
 cd "$(mktemp -d)"
 # wikiman
