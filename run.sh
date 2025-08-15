@@ -33,22 +33,41 @@ Type=X-GNOME-Metatheme
 Name=${THEME_NAME}
 Comment=Gruvbox Dark GTK Theme
 EOF
+
 gsettings set org.gnome.desktop.interface gtk-theme 'Gruvbox-Dark'
 gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+declare -A gsettings_keys=(
+  ["org.virt-manager.virt-manager.new-vm firmware"]="uefi"
+  ["org.virt-manager.virt-manager.new-vm cpu-default"]="host-passthrough"
+  ["org.virt-manager.virt-manager.new-vm graphics-type"]="spice"
+)
+
+for key in "${!gsettings_keys[@]}"; do
+  schema="${key% *}"
+  subkey="${key#* }"
+  value="${gsettings_keys[$key]}"
+
+  if gsettings describe "$schema" "$subkey" &>/dev/null; then
+    gsettings set "$schema" "$subkey" "$value"
+  fi
+done
 
 # Firefox user.js linking
-echo "/home/$USER/Documents/default/dotfiles/ublock.txt" | wl-copy
+echo "/home/$USER/Projects/personal/dotfiles/ublock.txt" | wl-copy
 gh auth login
 for dir in ~/.mozilla/firefox/*.default-release/; do
-    [ -d "$dir" ] || continue
-    ln -sf ~/Documents/default/dotfiles/user.js "$dir/user.js"
-    break
+  [ -d "$dir" ] || continue
+  ln -sf ~/Projects/personal/dotfiles/user.js "$dir/user.js"
+  break
 done
 
 # Libvirt setup
-virsh net-autostart default
-virsh net-start default
+if pacman -Qq libvirt &>/dev/null; then
+  sudo virsh net-autostart default
+  sudo virsh net-start default
+fi
 
 # Nvim tools install
 foot -e nvim +MasonToolsInstall &
+foot -e sudo nvim +MasonToolsInstall &

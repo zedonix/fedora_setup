@@ -77,12 +77,7 @@ sudo dnf -y copr enable maximizerr/SwayAura
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
 
-# eza
 cd "$(mktemp -d)"
-curl -LO https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
-tar -xzf eza_x86_64-unknown-linux-gnu.tar.gz
-sudo mv eza /usr/local/bin/
-sudo chmod +x /usr/local/bin/eza
 # wikiman
 RPM_URL=$(curl -s https://api.github.com/repos/filiparag/wikiman/releases/latest |
   grep "browser_download_url" |
@@ -99,34 +94,36 @@ unzip IosevkaTerm.zip
 rm IosevkaTerm.zip
 # unp
 python3 -m pip install --user unp
+cargo install starship --locked
+cargo install eza
 
 # Copy config and dotfiles as the user
-mkdir -p ~/.local/state/bash ~/.local/state/zsh
-mkdir -p ~/Downloads ~/Documents/default ~/Documents/projects ~/Public ~/Templates/wiki ~/Videos ~/Pictures/Screenshots ~/.config
-mkdir -p ~/.local/share/npm ~/.cache/npm ~/.config/npm/config ~/.local/bin
-touch ~/.local/state/bash/history ~/.local/state/zsh/history ~/Templates/wiki/index.md
+mkdir -p ~/Downloads ~/Documents ~/Public ~/Templates ~/Videos ~/Pictures/Screenshots ~/.config
+mkdir -p ~/Projects/work ~/Projects/sandbox
+mkdir -p ~/Knowledge/wiki ~/Knowledge/reference ~/Knowledge/notes
+mkdir -p ~/.local/bin ~/.cache/cargo-target ~/.local/state/bash ~/.local/state/zsh
+touch ~/.local/state/bash/history ~/.local/state/zsh/history
 
-git clone https://github.com/zedonix/scripts.git ~/Documents/default/scripts
-git clone https://github.com/zedonix/dotfiles.git ~/Documents/default/dotfiles
-git clone https://github.com/zedonix/archsetup.git ~/Documents/default/archsetup
-git clone https://github.com/zedonix/notes.git ~/Documents/default/notes
-git clone https://github.com/CachyOS/ananicy-rules.git ~/Documents/default/ananicy-rules
-git clone https://github.com/zedonix/GruvboxGtk.git ~/Documents/default/GruvboxGtk
-git clone https://github.com/zedonix/GruvboxQT.git ~/Documents/default/GruvboxQT
-git clone https://github.com/zedonix/fedora_setup.git ~/Documents/default/fedora_setup
+git clone https://github.com/zedonix/scripts.git ~/Projects/personal/scripts
+git clone https://github.com/zedonix/dotfiles.git ~/Projects/personal/dotfiles
+git clone https://github.com/zedonix/archsetup.git ~/Projects/personal/archsetup
+git clone https://github.com/zedonix/notes.git ~/Projects/personal/notes
+git clone https://github.com/zedonix/GruvboxGtk.git ~/Projects/personal/GruvboxGtk
+git clone https://github.com/zedonix/GruvboxQT.git ~/Projects/personal/GruvboxQT
+git clone https://github.com/zedonix/fedora_setup.git ~/Projects/personal/fedora_setup
+git clone https://github.com/CachyOS/ananicy-rules.git ~/Downloads/ananicy-rules
 
-if [[ -d ~/Documents/default/dotfiles ]]; then
-  cp ~/Documents/default/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
-  cp ~/Documents/default/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
-  cp -r ~/Documents/default/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
-  ln -sf ~/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
-  ln -sf ~/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
-  ln -sf ~/Documents/default/dotfiles/.gtk-bookmarks ~/.gtk-bookmarks || true
+if [[ -d ~/Projects/personal/dotfiles ]]; then
+  cp ~/Projects/personal/dotfiles/.config/sway/archLogo.png ~/Pictures/ 2>/dev/null || true
+  cp ~/Projects/personal/dotfiles/pics/* ~/Pictures/ 2>/dev/null || true
+  cp -r ~/Projects/personal/dotfiles/.local/share/themes/Gruvbox-Dark ~/.local/share/themes/ 2>/dev/null || true
+  ln -sf ~/Projects/personal/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
+  ln -sf ~/Projects/personal/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
 
-  for link in ~/Documents/default/dotfiles/.config/*; do
+  for link in ~/Projects/personal/dotfiles/.config/*; do
     ln -sf "$link" ~/.config/ 2>/dev/null || true
   done
-  for link in ~/Documents/default/scripts/bin/*; do
+  for link in ~/Projects/personal/scripts/bin/*; do
     ln -sf "$link" ~/.local/bin 2>/dev/null || true
   done
 fi
@@ -154,19 +151,19 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   mkdir -p ~/.config ~/.local/state/bash ~/.local/state/zsh
   echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' >~/.bash_profile
   touch ~/.local/state/zsh/history ~/.local/state/bash/history
-  ln -sf /home/$username/Documents/default/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
-  ln -sf /home/$username/Documents/default/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
-  ln -sf /home/$username/Documents/default/dotfiles/.config/nvim/ ~/.config
+  ln -sf /home/$username/Projects/personal/dotfiles/.bashrc ~/.bashrc 2>/dev/null || true
+  ln -sf /home/$username/Projects/personal/dotfiles/.zshrc ~/.zshrc 2>/dev/null || true
+  ln -sf /home/$username/Projects/personal/dotfiles/.config/nvim/ ~/.config
 
   # Setup QT theme
-  THEME_SRC="/home/$username/Documents/default/GruvboxQT/"
+  THEME_SRC="/home/$username/Projects/personal/GruvboxQT/"
   THEME_DEST="/usr/share/Kvantum/Gruvbox"
   mkdir -p "$THEME_DEST"
   cp "$THEME_SRC/gruvbox-kvantum.kvconfig" "$THEME_DEST/Gruvbox.kvconfig" 2>/dev/null || true
   cp "$THEME_SRC/gruvbox-kvantum.svg" "$THEME_DEST/Gruvbox.svg" 2>/dev/null || true
 
   # Install CachyOS Ananicy Rules
-  ANANICY_RULES_SRC="/home/$username/Documents/default/ananicy-rules"
+  ANANICY_RULES_SRC="/home/$username/Downloads/ananicy-rules"
   mkdir -p /etc/ananicy.d
 
   cp -r "$ANANICY_RULES_SRC/00-default" /etc/ananicy.d/ 2>/dev/null || true
@@ -180,7 +177,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
 
   # Firefox policy
   mkdir -p /etc/firefox/policies
-  ln -sf "/home/$username/Documents/default/dotfiles/policies.json" /etc/firefox/policies/policies.json 2>/dev/null || true
+  ln -sf "/home/$username/Projects/personal/dotfiles/policies.json" /etc/firefox/policies/policies.json 2>/dev/null || true
 
   # tldr wiki setup
   curl -L "https://raw.githubusercontent.com/filiparag/wikiman/master/Makefile" -o "wikiman-makefile"
@@ -208,16 +205,6 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   systemctl mask systemd-rfkill systemd-rfkill.socket
   systemctl disable NetworkManager-wait-online.service systemd-networkd.service systemd-resolved getty@tty2
 
-  # Greetd setup
-  printf '%s\n' \
-    '# Use Tuigreet as the greeter' \
-    '[greeter]' \
-    'path = "/usr/bin/tuigreet"' \
-    '' \
-    '# Define your sessions here. Adjust '\''sway'\'' to your compositor if needed.' \
-    '[session.sway]' \
-    'command = ["/usr/bin/sway"]' \
-    | sudo tee /etc/greetd/config.toml >/dev/null
   # prevent networkmanager from using systemd-resolved
   mkdir -p /etc/networkmanager/conf.d
   printf "[main]\nsystemd-resolved=false\n" | sudo tee /etc/networkmanager/conf.d/no-systemd-resolved.conf
@@ -263,4 +250,4 @@ flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flat
   crontab -l 2>/dev/null
   echo "*/5 * * * * battery-alert.sh"
   echo "@daily $(which trash-empty) 30"
-) | sort -u | uniq | crontab -
+) | crontab -
