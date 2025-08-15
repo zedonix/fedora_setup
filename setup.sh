@@ -63,7 +63,11 @@ fi
 
 # Install stuff
 # dnf mirror
-sudo dnf config-manager --save --setopt=fastestmirror=True
+sudo tee -a /etc/dnf/dnf.conf <<EOF
+fastestmirror=True
+deltarpm=True
+gpgcheck=True
+EOF
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf upgrade --refresh
