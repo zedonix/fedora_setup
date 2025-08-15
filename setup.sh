@@ -70,9 +70,11 @@ deltarpm=True
 assumeyes=True
 gpgcheck=True
 EOF
+sudo dnf clean all
+sudo dnf makecache
+sudo dnf upgrade --refresh
 ## Adding repos
-sudo dnf -y copr enable solopasha/hyprland
-sudo dnf -y copr enable maximizerr/SwayAura
+sudo dnf -y copr enable solopasha/hyprland maximizerr/SwayAura
 
 # pacstrap of fedora
 xargs sudo dnf install -y <pkglist.txt
