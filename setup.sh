@@ -11,7 +11,7 @@ cd "$SCRIPT_DIR"
 
 # Variable set
 username=piyush
-CHROOT="fedora-43-x86_64"
+CHROOT="fedora-42-x86_64"
 
 # Which type of install?
 # First choice: vm or hardware
@@ -75,7 +75,7 @@ sudo dnf upgrade --refresh
 ## Adding repos
 sudo dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-
+sudo dnf install -y dnf-plugins-core
 if ! copr-cli build maximizerr/SwayAura --chroot "$CHROOT"; then
     echo "ERROR: Chroot $CHROOT not found in maximizerr/SwayAura."
     echo "Please choose one from the following:"
