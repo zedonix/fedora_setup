@@ -2,10 +2,9 @@
 set -euo pipefail
 
 # Redirect all output (stdout & stderr) into the user’s home directory log
-LOGFILE="${HOME}/fedora_setup.log"
-# ensure log exists and is owned by the user
-: >"${LOGFILE}"
-exec > >(tee -a "$LOGFILE") 2>&1
+# LOGFILE="${HOME}/fedora_setup.log"
+# : >"${LOGFILE}"
+# exec > >(tee -a "$LOGFILE") 2>&1
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 cd "$SCRIPT_DIR"
