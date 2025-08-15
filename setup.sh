@@ -12,7 +12,7 @@ cd "$SCRIPT_DIR"
 
 # Variable set
 username=piyush
-CHROOT="fedora-42-x86_64"
+CHROOT="fedora-43-x86_64"
 
 # Which type of install?
 # First choice: vm or hardware
