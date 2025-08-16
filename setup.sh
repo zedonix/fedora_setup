@@ -196,7 +196,7 @@ sudo env hardware="$hardware" extra="$extra" username="$username" bash <<'EOF'
   # services
   # rfkill unblock bluetooth
   # modprobe btusb || true
-  systemctl enable NetworkManager NetworkManager-dispatcher greetd crond ananicy-cpp
+  systemctl enable NetworkManager NetworkManager-dispatcher crond ananicy-cpp
   if [[ "$hardware" == "hardware" ]]; then
       systemctl enable fstrim.timer acpid libvirtd.socket cups ipp-usb docker.socket
       if [[ "$extra" == "laptop" || "$extra" == "bluetooth" ]]; then
