@@ -96,7 +96,7 @@ cd ~/.local/share/fonts/iosevka
 curl -LO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/IosevkaTerm.zip
 unzip IosevkaTerm.zip
 rm IosevkaTerm.zip
-# unp
+# External
 python3 -m pip install --user unp
 cargo install starship --locked
 cargo install eza
